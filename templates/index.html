@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>SkyCompare | Flight Search</title>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">SkyCompare</h1>
+            <p class="lead">Your Priorities. Your Flight.</p>
+        </div>
+
+        <div class="card shadow border-0 p-4 mx-auto" style="max-width: 600px;">
+            <form action="/search" method="POST">
+                <h5 class="mb-3 text-secondary">Flight Details</h5>
+                <div class="row mb-4">
+                    <div class="col">
+                        <label class="form-label small fw-bold">From</label>
+                        <input type="text" name="origin" class="form-control" placeholder="e.g. ATL" required>
+                    </div>
+                    <div class="col">
+                        <label class="form-label small fw-bold">To</label>
+                        <input type="text" name="dest" class="form-control" placeholder="e.g. LAX" required>
+                    </div>
+                </div>
+
+                <h5 class="mb-3 text-secondary">Set Your Priorities (%)</h5>
+                
+                <label class="form-label">Price</label>
+                <input type="range" name="weight_price" class="form-range mb-2" value="40">
+
+                <label class="form-label">Timing (Schedule)</label>
+                <input type="range" name="weight_timing" class="form-range mb-2" value="15">
+
+                <label class="form-label">Direct Routes</label>
+                <input type="range" name="weight_direct" class="form-range mb-2" value="15">
+
+                <label class="form-label">Baggage Policies</label>
+                <input type="range" name="weight_baggage" class="form-range mb-2" value="10">
+
+                <label class="form-label">Seat Comfort</label>
+                <input type="range" name="weight_comfort" class="form-range mb-2" value="10">
+
+                <label class="form-label">Customer Service</label>
+                <input type="range" name="weight_service" class="form-range mb-4" value="10">
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 shadow">Rank Flights</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

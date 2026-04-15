@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>SkyCompare | Rankings</title>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">Optimized Results</h1>
+            <a href="/" class="btn btn-outline-secondary">Back to Search</a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover bg-white shadow-sm rounded">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Airline</th>
+                        <th>SkyScore</th>
+                        <th>Price</th>
+                        <th>On-Time</th>
+                        <th>Baggage Fee</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in flights %}
+                    <tr>
+                        <td class="fw-bold">{{ f.logo }} {{ f.airline }}</td>
+                        <td><span class="badge {% if f.sky_score > 75 %}bg-success{% else %}bg-primary{% endif %}">{{ f.sky_score }}</span></td>
+                        <td>${{ f.price }}</td>
+                        <td>{{ f.on_time }}%</td>
+                        <td>{{ f.baggage }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

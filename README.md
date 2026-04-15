@@ -1,0 +1,1 @@
+# SkyCompare\n\nCustom flight ranking engine using Python, Flask, and BeautifulSoup.

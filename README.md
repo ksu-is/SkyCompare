@@ -1,1 +1,1 @@
-# SkyCompare made to trach fligths and give you the best updates
+# SkyCompare made to track fligths and give you the best updates

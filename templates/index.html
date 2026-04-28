@@ -53,6 +53,28 @@
             margin-right: 6px;
         }
         select option { background-color: #2a2a2a; color: #f0f0f0; }
+        .airport-wrapper { position: relative; }
+        .airport-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2a2a2a;
+            border: 1px solid #C0392B;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            z-index: 1000;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .airport-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: #f0f0f0;
+        }
+        .airport-option:hover, .airport-option.active { background: #C0392B; }
     </style>
 </head>
 <body>
@@ -69,13 +91,21 @@
                 <div class="row mb-3">
                     <div class="col">
                         <label class="form-label">From</label>
-                        <input type="text" name="origin" class="form-control"
-                               placeholder="e.g. Atlanta or ATL" required>
+                        <div class="airport-wrapper">
+                            <input type="text" id="origin_display" class="form-control"
+                                   placeholder="City or airport code" autocomplete="off" required>
+                            <input type="hidden" name="origin" id="origin_code">
+                            <div class="airport-dropdown" id="origin_dropdown"></div>
+                        </div>
                     </div>
                     <div class="col">
                         <label class="form-label">To</label>
-                        <input type="text" name="dest" class="form-control"
-                               placeholder="e.g. Los Angeles or LAX" required>
+                        <div class="airport-wrapper">
+                            <input type="text" id="dest_display" class="form-control"
+                                   placeholder="City or airport code" autocomplete="off" required>
+                            <input type="hidden" name="dest" id="dest_code">
+                            <div class="airport-dropdown" id="dest_dropdown"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="mb-4">
@@ -134,22 +164,170 @@
     </div>
 
     <script>
-        // Prevent the same factor from being picked in two dropdowns
+        // ── Airport autocomplete ─────────────────────────────────────────
+        const AIRPORTS = [
+            {code:"ATL",name:"Atlanta — Hartsfield-Jackson (ATL)"},
+            {code:"LAX",name:"Los Angeles (LAX)"},
+            {code:"JFK",name:"New York — JFK (JFK)"},
+            {code:"EWR",name:"Newark (EWR)"},
+            {code:"LGA",name:"New York — LaGuardia (LGA)"},
+            {code:"ORD",name:"Chicago — O'Hare (ORD)"},
+            {code:"MDW",name:"Chicago — Midway (MDW)"},
+            {code:"DFW",name:"Dallas/Fort Worth (DFW)"},
+            {code:"DAL",name:"Dallas — Love Field (DAL)"},
+            {code:"MIA",name:"Miami (MIA)"},
+            {code:"MCO",name:"Orlando (MCO)"},
+            {code:"SFO",name:"San Francisco (SFO)"},
+            {code:"SEA",name:"Seattle-Tacoma (SEA)"},
+            {code:"DEN",name:"Denver (DEN)"},
+            {code:"LAS",name:"Las Vegas (LAS)"},
+            {code:"BOS",name:"Boston — Logan (BOS)"},
+            {code:"DCA",name:"Washington — Reagan (DCA)"},
+            {code:"IAD",name:"Washington — Dulles (IAD)"},
+            {code:"IAH",name:"Houston — Intercontinental (IAH)"},
+            {code:"HOU",name:"Houston — Hobby (HOU)"},
+            {code:"PHX",name:"Phoenix (PHX)"},
+            {code:"MSP",name:"Minneapolis (MSP)"},
+            {code:"DTW",name:"Detroit (DTW)"},
+            {code:"CLT",name:"Charlotte (CLT)"},
+            {code:"PHL",name:"Philadelphia (PHL)"},
+            {code:"SLC",name:"Salt Lake City (SLC)"},
+            {code:"PDX",name:"Portland (PDX)"},
+            {code:"SAN",name:"San Diego (SAN)"},
+            {code:"TPA",name:"Tampa (TPA)"},
+            {code:"BNA",name:"Nashville (BNA)"},
+            {code:"MSY",name:"New Orleans (MSY)"},
+            {code:"MEM",name:"Memphis (MEM)"},
+            {code:"MCI",name:"Kansas City (MCI)"},
+            {code:"STL",name:"St. Louis (STL)"},
+            {code:"BWI",name:"Baltimore (BWI)"},
+            {code:"PIT",name:"Pittsburgh (PIT)"},
+            {code:"CLE",name:"Cleveland (CLE)"},
+            {code:"CMH",name:"Columbus (CMH)"},
+            {code:"IND",name:"Indianapolis (IND)"},
+            {code:"CVG",name:"Cincinnati (CVG)"},
+            {code:"RDU",name:"Raleigh-Durham (RDU)"},
+            {code:"AUS",name:"Austin (AUS)"},
+            {code:"SAT",name:"San Antonio (SAT)"},
+            {code:"SMF",name:"Sacramento (SMF)"},
+            {code:"OAK",name:"Oakland (OAK)"},
+            {code:"SJC",name:"San Jose (SJC)"},
+            {code:"FLL",name:"Fort Lauderdale (FLL)"},
+            {code:"JAX",name:"Jacksonville (JAX)"},
+            {code:"HNL",name:"Honolulu (HNL)"},
+            {code:"ANC",name:"Anchorage (ANC)"},
+            {code:"SDF",name:"Louisville (SDF)"},
+            {code:"BUF",name:"Buffalo (BUF)"},
+            {code:"MKE",name:"Milwaukee (MKE)"},
+            {code:"BOI",name:"Boise (BOI)"},
+            {code:"GEG",name:"Spokane (GEG)"},
+            {code:"RNO",name:"Reno (RNO)"},
+            {code:"ABQ",name:"Albuquerque (ABQ)"},
+            {code:"TUS",name:"Tucson (TUS)"},
+            {code:"ELP",name:"El Paso (ELP)"},
+            {code:"OKC",name:"Oklahoma City (OKC)"},
+            {code:"TUL",name:"Tulsa (TUL)"},
+            {code:"OMA",name:"Omaha (OMA)"},
+            {code:"RIC",name:"Richmond (RIC)"},
+            {code:"ORF",name:"Norfolk (ORF)"},
+            {code:"GSP",name:"Greenville-Spartanburg (GSP)"},
+            {code:"CHS",name:"Charleston (CHS)"},
+            {code:"SAV",name:"Savannah (SAV)"},
+            {code:"TYS",name:"Knoxville (TYS)"},
+            {code:"BHM",name:"Birmingham (BHM)"},
+            {code:"LIT",name:"Little Rock (LIT)"},
+            {code:"BTR",name:"Baton Rouge (BTR)"},
+            {code:"JAN",name:"Jackson (JAN)"},
+            {code:"BUR",name:"Burbank (BUR)"},
+            {code:"LGB",name:"Long Beach (LGB)"},
+            {code:"ONT",name:"Ontario (ONT)"},
+            {code:"PSP",name:"Palm Springs (PSP)"},
+            {code:"SBA",name:"Santa Barbara (SBA)"},
+            {code:"FAT",name:"Fresno (FAT)"},
+        ];
+
+        function setupAirport(displayId, codeId, dropdownId) {
+            const display  = document.getElementById(displayId);
+            const code     = document.getElementById(codeId);
+            const dropdown = document.getElementById(dropdownId);
+            let activeIdx  = -1;
+
+            display.addEventListener('input', () => {
+                const val = display.value.trim().toLowerCase();
+                code.value = '';
+                activeIdx  = -1;
+                if (!val) { dropdown.style.display = 'none'; return; }
+
+                const hits = AIRPORTS.filter(a =>
+                    a.name.toLowerCase().includes(val) || a.code.toLowerCase().startsWith(val)
+                ).slice(0, 8);
+
+                if (!hits.length) { dropdown.style.display = 'none'; return; }
+
+                dropdown.innerHTML = hits.map((a, i) =>
+                    `<div class="airport-option" data-code="${a.code}" data-name="${a.name}" data-idx="${i}">${a.name}</div>`
+                ).join('');
+                dropdown.style.display = 'block';
+            });
+
+            display.addEventListener('keydown', e => {
+                const opts = dropdown.querySelectorAll('.airport-option');
+                if (!opts.length) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIdx = Math.min(activeIdx + 1, opts.length - 1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIdx = Math.max(activeIdx - 1, 0);
+                } else if (e.key === 'Enter' && activeIdx >= 0) {
+                    e.preventDefault();
+                    opts[activeIdx].click();
+                    return;
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none'; return;
+                }
+                opts.forEach((o, i) => o.classList.toggle('active', i === activeIdx));
+            });
+
+            dropdown.addEventListener('mousedown', e => {
+                const opt = e.target.closest('.airport-option');
+                if (!opt) return;
+                display.value = opt.dataset.name;
+                code.value    = opt.dataset.code;
+                dropdown.style.display = 'none';
+            });
+
+            document.addEventListener('click', e => {
+                if (!display.contains(e.target) && !dropdown.contains(e.target))
+                    dropdown.style.display = 'none';
+            });
+        }
+
+        setupAirport('origin_display', 'origin_code', 'origin_dropdown');
+        setupAirport('dest_display',   'dest_code',   'dest_dropdown');
+
+        // On submit, fall back to raw display text if user didn't pick from list
+        document.querySelector('form').addEventListener('submit', () => {
+            const oCode = document.getElementById('origin_code');
+            const dCode = document.getElementById('dest_code');
+            if (!oCode.value) oCode.value = document.getElementById('origin_display').value.trim();
+            if (!dCode.value) dCode.value = document.getElementById('dest_display').value.trim();
+        });
+
+        // ── Priority dropdowns: prevent duplicate selection ──────────────
         const selects = [document.getElementById('p1'), document.getElementById('p2'), document.getElementById('p3')];
 
         selects.forEach((sel, i) => {
             sel.addEventListener('change', () => {
-                const taken = selects.filter((_, j) => j !== i).map(s => s.value);
                 selects.forEach((s, j) => {
+                    const otherTaken = selects.filter((_, k) => k !== j).map(x => x.value);
                     [...s.options].forEach(opt => {
-                        const otherTaken = selects.filter((_, k) => k !== j).map(x => x.value);
                         opt.disabled = otherTaken.includes(opt.value) && opt.value !== s.value;
                     });
                 });
             });
         });
 
-        // Run once on load to set initial disabled state
         selects[0].dispatchEvent(new Event('change'));
     </script>
 </body>

@@ -16,6 +16,17 @@ CARRIER_METRICS = {
 SERPAPI_URL       = "https://serpapi.com/search"
 AVIATIONSTACK_URL = "http://api.aviationstack.com/v1/flights"
 
+AIRLINE_URLS = {
+    "Delta":     "https://www.delta.com",
+    "Spirit":    "https://www.spirit.com",
+    "United":    "https://www.united.com",
+    "JetBlue":   "https://www.jetblue.com",
+    "American":  "https://www.aa.com",
+    "Southwest": "https://www.southwest.com",
+    "Frontier":  "https://www.flyfrontier.com",
+    "Alaska":    "https://www.alaskaair.com",
+}
+
 
 class FlightScraper:
     def __init__(self):
@@ -26,10 +37,36 @@ class FlightScraper:
     # Main entry point — SerpAPI first, AviationStack as fallback
     # ------------------------------------------------------------------
     def fetch_live_flights(self, origin, dest, date=None):
+        self._origin = origin
+        self._dest   = dest
+        self._date   = date or ""
         flights = self._fetch_serpapi(origin, dest, date)
         if not flights:
             flights = self._fetch_aviationstack(origin, dest)
         return flights  # None triggers DEFAULT_FLIGHTS fallback in app.py
+
+    def _build_booking_url(self, airline_name):
+        o, d, dt = self._origin, self._dest, self._date
+        if airline_name == "Southwest":
+            return (f"https://www.southwest.com/air/booking/select.html"
+                    f"?originationAirportCode={o}&destinationAirportCode={d}"
+                    f"&departureDate={dt}&returnDate=&adultPassengersCount=1"
+                    f"&seniorPassengersCount=0&fareType=USD&passengerType=ADULT")
+        if airline_name == "American":
+            return (f"https://www.aa.com/booking/choose-flights/1"
+                    f"?sliceIndex=0&locale=en_US&origNghbrhd=false&destNghbrhd=false"
+                    f"&departureDate={dt}&returnDate=&cabinClass=Economy&adults=1"
+                    f"&teens=0&children=0&infants=0&tripType=oneWay&from={o}&to={d}")
+        if airline_name == "United":
+            return (f"https://www.united.com/ual/en/us/flight-search/book-a-flight/results/rev"
+                    f"?f={o}&t={d}&d={dt}&tt=1&at=1&sc=7&px=1&taxng=1"
+                    f"&newHP=True&clm=7&st=bestmatches&fareFamily=mixed")
+        if airline_name == "JetBlue":
+            return (f"https://www.jetblue.com/booking/flights"
+                    f"?from={o}&to={d}&depart={dt}&isMultiCity=false"
+                    f"&noOfRoute=1&lang=en&adults=1&minors=0&sharedMarket=false"
+                    f"&roundTripFaresFlag=false&usePoints=false")
+        return AIRLINE_URLS.get(airline_name, "#")
 
     # ------------------------------------------------------------------
     # SerpAPI (Google Flights) — real prices, duration, stops, times
@@ -110,6 +147,7 @@ class FlightScraper:
             "on_time":       m.get("on_time", 75),
             "service_score": 75,
             "timing_score":  80,
+            "booking_url":   self._build_booking_url(airline_name),
         }
 
     # ------------------------------------------------------------------
@@ -167,12 +205,15 @@ class FlightScraper:
             "on_time":       m.get("on_time", 75),
             "service_score": 75,
             "timing_score":  80,
+            "booking_url":   self._build_booking_url(m.get("name", airline_name)),
         }
 
     # ------------------------------------------------------------------
     # Enrich fallback mock data
     # ------------------------------------------------------------------
     def enrich_results(self, flights):
+        if not hasattr(self, '_origin'):
+            self._origin = self._dest = self._date = ""
         for f in flights:
             if "comfort_score" not in f:
                 name = f.get("airline", "")
@@ -190,5 +231,6 @@ class FlightScraper:
                     "departure":     "N/A",
                     "arrival":       "N/A",
                     "stops":         0 if f.get("route") == "Nonstop" else 1,
+                    "booking_url":   self._build_booking_url(f.get("airline", "")),
                 })
         return flights

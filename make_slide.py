@@ -77,7 +77,10 @@ tb(slide, Inches(0.35), Inches(1.72), LEFT_W, Inches(0.32),
 tb(slide, Inches(0.35), Inches(2.0), LEFT_W, Inches(0.25),
    "IS Project  ·  Spring 2026", 10, GRAY)
 
-rect(slide, Inches(0.35), Inches(2.38), Inches(4.4), Inches(0.03), BORDER)
+tb(slide, Inches(0.35), Inches(2.22), LEFT_W, Inches(0.25),
+   "github.com/ksu-is/SkyCompare", 9, RGBColor(0xC0, 0x39, 0x2B))
+
+rect(slide, Inches(0.35), Inches(2.52), Inches(4.4), Inches(0.03), BORDER)
 
 features = [
     "Live prices from Google Flights via SerpAPI",
@@ -88,7 +91,7 @@ features = [
     "Red & black dark UI built on Bootstrap 5",
 ]
 
-feat_box = slide.shapes.add_textbox(Inches(0.35), Inches(2.52), Inches(4.55), Inches(4.0))
+feat_box = slide.shapes.add_textbox(Inches(0.35), Inches(2.66), Inches(4.55), Inches(4.0))
 feat_box.text_frame.word_wrap = True
 for i, feat in enumerate(features):
     p = feat_box.text_frame.paragraphs[0] if i == 0 else feat_box.text_frame.add_paragraph()
@@ -125,14 +128,11 @@ tb(slide, RESULTS_X, SCREEN_TOP - Inches(0.27), results_W, Inches(0.24),
 slide.shapes.add_picture(search_img,  SEARCH_X,  SCREEN_TOP, height=TARGET_H)
 slide.shapes.add_picture(results_img, RESULTS_X, SCREEN_TOP, height=TARGET_H)
 
-# Thin border around each screenshot
-rect(slide, SEARCH_X,  SCREEN_TOP, search_W,  TARGET_H, RGBColor(0,0,0), BORDER)
-rect(slide, RESULTS_X, SCREEN_TOP, results_W, TARGET_H, RGBColor(0,0,0), BORDER)
-
-# Fix: make border rects transparent fill so image shows through
-for shp in slide.shapes:
-    if shp.shape_type == 1 and shp.left in (SEARCH_X, RESULTS_X) and shp.top == SCREEN_TOP:
-        shp.fill.background()
+# Thin border around each screenshot (transparent fill so image shows through)
+for bx, bw in [(SEARCH_X, search_W), (RESULTS_X, results_W)]:
+    s = slide.shapes.add_shape(1, bx, SCREEN_TOP, bw, TARGET_H)
+    s.fill.background()
+    s.line.color.rgb = BORDER
 
 # ── Bottom tagline ───────────────────────────────────────────────────────
 BOTTOM_Y = SCREEN_TOP + TARGET_H + Inches(0.18)
